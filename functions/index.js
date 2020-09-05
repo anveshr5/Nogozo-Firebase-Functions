@@ -33,11 +33,23 @@ exports.onOrderStatusChange = functions.database.ref('/orders/{orderid}')
 		}else if(change.after._data.status == "3"){
 			status = "Delivered";
 			orderComplete(context.params.orderid, customerid, shopid, change.after._data.price, change.after._data.datetime);
+		}else if(change.after._data.status == "-1"){
+			status = "Cancelled";
+			orderCancel(context.params.orderid, customerid, shopid, change.after._data.price, change.after._data.datetime);
 		}
+		
+		
 		sendNotification(customerid, "Order " + status, "Your Order from " + change.after._data.shopname + " is "+ status);
 	}
 
 });
+
+function orderCancel(orderId, customerId, shopId, price, datetime){
+	const db = admin.database();
+	datetime = datetime.substring(0, 6);
+	db.ref(`/users/customer/${customerId}/orders/${orderId}`).set('cancelled');
+	db.ref(`/users/shop/${shopId}/orders/${orderId}`).set('cancelled');
+}
 
 function orderComplete(orderId, customerId, shopId, price, datetime){
 	const db = admin.database();
